@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { archiveTank, updateTank } from '@/lib/tank-service';
-import type { AlertRules, FillWindow } from '@/lib/types';
+import { DEFAULT_RULES, type AlertRules, type FillWindow } from '@/lib/types';
 
 export default function TankSettings({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -31,6 +31,13 @@ export default function TankSettings({ params }: { params: Promise<{ id: string 
 
   async function save() {
     await updateTank(id, { rules: rules! });
+    setSaved(true);
+  }
+
+  async function resetToDefault() {
+    const fresh = structuredClone(DEFAULT_RULES);
+    setRules(fresh);
+    await updateTank(id, { rules: fresh });
     setSaved(true);
   }
 
@@ -127,7 +134,15 @@ export default function TankSettings({ params }: { params: Promise<{ id: string 
         </label>
       </Group>
 
-      <div className="mt-6 flex gap-2">
+      <button
+        onClick={resetToDefault}
+        className="mt-6 w-full rounded-lg border border-[var(--line)] py-2.5 text-[13px] text-[var(--muted)]"
+        title="Mengembalikan semua ambang, jadwal, dan waktu tahan alert ke nilai bawaan aplikasi."
+      >
+        Reset ke default
+      </button>
+
+      <div className="mt-2 flex gap-2">
         <button onClick={save} className="flex-1 rounded-lg bg-[var(--ice)] py-3 text-[15px] font-semibold text-[var(--ink)]">
           {saved ? 'Tersimpan' : 'Simpan pengaturan'}
         </button>

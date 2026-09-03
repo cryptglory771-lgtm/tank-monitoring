@@ -120,10 +120,13 @@ export const DEFAULT_RULES: AlertRules = {
   ],
   minCoolingRatePerHour: 1.0,
   unscheduledRiseDelta: 1.5,
-  sustainSeconds: 180,
+  // 20 detik: cukup untuk menyaring lonjakan sesaat tanpa bikin status
+  // terasa lambat berubah saat diuji. Naikkan ke 120-180 detik sebelum
+  // dipakai di tanki sungguhan, supaya noise sensor tidak memicu alert palsu.
+  sustainSeconds: 20,
   recoverHysteresis: 0.4,
   offlineAfterMinutes: 10,
-  renotifyMinutes: 30,
+  renotifyMinutes: 3,
   quietHours: null,
   enabled: true,
 };
