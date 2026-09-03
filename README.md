@@ -124,17 +124,60 @@ Belum punya perangkat? Buka **Tanki → Data contoh**. Aplikasi akan membuat sat
 tanki berisi tiga hari data buatan lengkap dengan dua siklus pengisian harian,
 cukup untuk menguji tampilan dan menyetel ambang.
 
-## Deploy di VPS AlmaLinux
+## Deploy di VPS (tanpa Docker)
+
+Web app dan alert worker adalah dua proses Node terpisah yang jalan
+berdampingan di VPS yang sama — bukan dua layanan berjauhan. `worker/index.ts`
+harus selalu menyala (bukan serverless) karena ia menahan koneksi MQTT terus-
+menerus; ini sebabnya **worker ini tidak bisa dijalankan di Vercel**, hanya di
+VPS/host yang selalu hidup.
+
+### Opsi A — pm2 (disarankan, paling gampang dikelola)
 
 ```bash
+git clone <repo-anda> /opt/tank-monitoring
+cd /opt/tank-monitoring
 npm ci && npm run build
+cp .env.example .env   # isi semua nilai, lihat bagian "Menjalankan" di atas
+
 npm i -g pm2
+mkdir -p logs
 pm2 start worker/ecosystem.config.cjs
-pm2 save && pm2 startup
+pm2 save
+pm2 startup   # jalankan perintah yang ditampilkan, supaya pm2 otomatis start saat VPS reboot
 ```
 
-Letakkan Nginx di depan dengan sertifikat TLS. **HTTPS wajib** — tanpa itu
-service worker dan Web Push tidak akan aktif.
+Setelah itu, untuk update ke versi terbaru:
+
+```bash
+./scripts/deploy-vps.sh
+```
+
+Cek status & log kapan pun dengan `pm2 status`, `pm2 logs tank-alert-worker`.
+
+### Opsi B — systemd (kalau tidak mau bergantung pada pm2)
+
+```bash
+sudo useradd --system --home /opt/tank-monitoring tankmon
+sudo git clone <repo-anda> /opt/tank-monitoring
+cd /opt/tank-monitoring
+npm ci && npm run build
+sudo cp .env.example .env && sudo nano .env   # isi semua nilai
+sudo chown -R tankmon:tankmon /opt/tank-monitoring
+
+sudo cp worker/systemd/tank-web.service worker/systemd/tank-alert-worker.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now tank-web tank-alert-worker
+```
+
+Update ke versi terbaru: `git pull && npm ci && npm run build && sudo systemctl restart tank-web tank-alert-worker`.
+
+### Nginx + TLS
+
+Letakkan Nginx di depan `tank-web` (port 3000) dengan sertifikat TLS (mis. Certbot).
+**HTTPS wajib** — tanpa itu service worker dan Web Push tidak akan aktif. Worker
+tidak butuh Nginx sama sekali; ia hanya bicara keluar ke HiveMQ dan ke `tank-web`
+lewat `APP_BASE_URL` (isi dengan `http://127.0.0.1:3000` kalau satu VPS yang sama).
 
 Beberapa hal yang perlu dicatat:
 
@@ -145,6 +188,9 @@ Beberapa hal yang perlu dicatat:
 - Worker menyimpan buffer pembacaan di memori saja. Kalau restart, ia sengaja
   menahan alert "tidak terhubung" selama beberapa menit pertama supaya tidak
   membangunkan orang tanpa sebab.
+- Kalau web app-nya sendiri sudah di-deploy di Vercel (untuk PWA/dashboardnya),
+  worker tetap harus jalan di VPS terpisah — arahkan `APP_BASE_URL` di `.env`
+  VPS ke URL Vercel tersebut, dan pastikan `WORKER_TOKEN` di kedua tempat sama persis.
 
 ## Peta berkas
 

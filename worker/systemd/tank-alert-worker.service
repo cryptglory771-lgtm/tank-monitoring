@@ -1,0 +1,21 @@
+[Unit]
+Description=Cooling Tank Monitor - alert worker (MQTT -> Web Push)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Ganti dengan lokasi clone project & user yang menjalankannya.
+WorkingDirectory=/opt/tank-monitoring
+EnvironmentFile=/opt/tank-monitoring/.env
+ExecStart=/opt/tank-monitoring/node_modules/.bin/tsx worker/index.ts
+Restart=always
+RestartSec=5
+User=tankmon
+Group=tankmon
+NoNewPrivileges=true
+StandardOutput=append:/var/log/tank-alert-worker.log
+StandardError=append:/var/log/tank-alert-worker.log
+
+[Install]
+WantedBy=multi-user.target

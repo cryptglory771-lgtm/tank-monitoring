@@ -38,3 +38,4 @@ next-env.d.ts
 worker/subscriptions.json
 worker/state.json
 data/store.json
+logs/

@@ -165,11 +165,32 @@ async function broadcast(tank: Tank, result: Evaluation, now: number) {
 
 const startedAt = Date.now();
 
-await refreshConfig();
-setInterval(refreshConfig, 60_000);
-setInterval(() => { tick().catch((e) => console.error('[worker] tick:', e)); }, 30_000);
+// Dibungkus fungsi async (bukan top-level await) supaya tetap jalan lewat
+// `tsx` dalam mode CommonJS default project ini, tanpa perlu "type": "module".
+async function main() {
+  await refreshConfig();
+  setInterval(refreshConfig, 60_000);
+  setInterval(() => { tick().catch((e) => console.error('[worker] tick:', e)); }, 30_000);
 
-console.log('[worker] berjalan');
+  console.log(`[worker] berjalan — ${tanks.length} tanki, ${subscriptions.length} perangkat terdaftar`);
+}
+
+main().catch((err) => {
+  console.error('[worker] gagal memulai:', err);
+  process.exit(1);
+});
+
+// Jangan biarkan error tak tertangkap mematikan proses secara diam-diam —
+// log dulu supaya kelihatan di pm2/systemd, baru keluar dengan kode non-nol
+// supaya process manager tahu harus restart, bukan menganggapnya berhenti normal.
+process.on('unhandledRejection', (err) => {
+  console.error('[worker] unhandledRejection:', err);
+  process.exit(1);
+});
+process.on('uncaughtException', (err) => {
+  console.error('[worker] uncaughtException:', err);
+  process.exit(1);
+});
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, () => { client.end(true, () => process.exit(0)); });
