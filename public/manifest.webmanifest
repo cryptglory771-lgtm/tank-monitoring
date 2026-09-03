@@ -1,0 +1,16 @@
+{
+  "name": "Cooling Tank Monitor",
+  "short_name": "Cooling Tank",
+  "description": "Pantau suhu tanki pendingin susu secara langsung, termasuk saat aplikasi tertutup.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0E13",
+  "theme_color": "#0A0E13",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
