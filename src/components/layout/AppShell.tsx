@@ -3,6 +3,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import ConnectionBanner from '@/components/ConnectionBanner';
+import IOSInstallHint from '@/components/IOSInstallHint';
 import TabBar from './TabBar';
 
 /**
@@ -46,6 +47,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </header>
 
+        <IOSInstallHint />
         <ConnectionBanner />
 
         {children}

@@ -13,6 +13,18 @@ export async function registerServiceWorker() {
   return navigator.serviceWorker.register('/sw.js', { scope: '/' });
 }
 
+export function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+/** Sudah terpasang ke Layar Utama / dibuka sebagai app, bukan tab Safari biasa. */
+export function isStandalone(): boolean {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as unknown as { standalone?: boolean }).standalone === true
+  );
+}
+
 export type PushSetupResult =
   | { ok: true }
   | { ok: false; reason: string };
@@ -22,11 +34,7 @@ export async function enablePush(): Promise<PushSetupResult> {
     return { ok: false, reason: 'Peramban ini tidak mendukung notifikasi latar belakang.' };
   }
   // iOS hanya mengizinkan push setelah PWA dipasang ke layar utama.
-  const standalone =
-    window.matchMedia('(display-mode: standalone)').matches ||
-    (navigator as unknown as { standalone?: boolean }).standalone === true;
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  if (isIOS && !standalone) {
+  if (isIOS() && !isStandalone()) {
     return { ok: false, reason: 'Di iPhone, tambahkan dulu aplikasi ini ke Layar Utama lewat menu Bagikan.' };
   }
 
