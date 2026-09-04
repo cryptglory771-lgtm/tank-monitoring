@@ -43,6 +43,14 @@ export function useAlertHistory(tankId: string, limit = 5): AlertRecord[] {
   ) ?? [];
 }
 
+/** Riwayat alert dari SELURUH tanki (warning & critical), terbaru lebih dulu. */
+export function useAllAlertHistory(limit = 100): AlertRecord[] {
+  return useLiveQuery(
+    () => db.alerts.orderBy('startedAt').reverse().limit(limit).toArray(),
+    [limit],
+  ) ?? [];
+}
+
 /**
  * Menilai satu tanki dengan mesin yang sama dengan worker di server, lalu
  * mencatat status terakhir agar histeresis pemulihan punya acuan.
