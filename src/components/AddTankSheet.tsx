@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '@/lib/db';
 import { createTank } from '@/lib/tank-service';
 import { seedDemoTank } from '@/lib/simulator';
@@ -10,6 +11,12 @@ export default function AddTankSheet({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [error, setError] = useState<string | null>(null);
+  // Di-portal ke document.body: Safari iOS memperlakukan `position: fixed`
+  // di dalam container `overflow-y: auto` (.app-scroll) seolah fixed
+  // terhadap container itu, bukan layar penuh — sheet jadi terpotong di
+  // batas atas tab bar. Portal keluar dari container itu sepenuhnya.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   async function save() {
     const clean = id.trim();
@@ -25,10 +32,12 @@ export default function AddTankSheet({ onClose }: { onClose: () => void }) {
     onClose();
   }
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-30 flex items-end justify-center" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={onClose}>
       <div
-        className="w-full max-w-[430px] rounded-t-[24px] border-t px-5 pb-8 pt-4"
+        className="max-h-[85dvh] w-full max-w-[430px] overflow-y-auto rounded-t-[24px] border-t px-5 pb-8 pt-4"
         style={{ background: 'var(--steel)', borderColor: 'var(--line-soft)', paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -60,7 +69,8 @@ export default function AddTankSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
