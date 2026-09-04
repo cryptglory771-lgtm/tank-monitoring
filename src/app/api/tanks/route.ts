@@ -4,8 +4,13 @@ import { getStore, saveTanks } from '@/lib/server-store';
 export const runtime = 'nodejs';
 
 export async function GET() {
-  const { tanks } = await getStore();
-  return NextResponse.json({ tanks });
+  try {
+    const { tanks } = await getStore();
+    return NextResponse.json({ tanks });
+  } catch (err) {
+    console.error('[api/tanks] gagal membaca store:', err);
+    return NextResponse.json({ error: 'Gagal membaca konfigurasi tanki di server.' }, { status: 500 });
+  }
 }
 
 /**
@@ -17,6 +22,11 @@ export async function POST(req: Request) {
   if (!Array.isArray(body?.tanks)) {
     return NextResponse.json({ error: 'Daftar tanki tidak valid.' }, { status: 400 });
   }
-  await saveTanks(body.tanks);
+  try {
+    await saveTanks(body.tanks);
+  } catch (err) {
+    console.error('[api/tanks] gagal menyimpan:', err);
+    return NextResponse.json({ error: 'Gagal menyimpan konfigurasi tanki di server.' }, { status: 500 });
+  }
   return NextResponse.json({ ok: true, count: body.tanks.length });
 }
